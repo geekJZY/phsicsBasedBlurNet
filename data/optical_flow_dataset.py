@@ -4,7 +4,6 @@ import os.path
 from scipy.ndimage import imread
 import numpy as np
 import glob
-from .util import split2list
 
 
 def default_loader(root, path_imgs):

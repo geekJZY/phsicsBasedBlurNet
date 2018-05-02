@@ -1,5 +1,6 @@
 import torch.nn.functional as F
 import torch.optim as optim
+import torch.nn as nn
 import torch
 import torchvision
 import math
@@ -40,19 +41,19 @@ def KernelGene( x, y, u ,v):
 
 class flowToKernel(nn.Module):
     def __init__(self):
-	super(flowToKernel, self).__init__()
-        KernelInput = np.ones((1089,33,33), dtype=float)
-        KernelOne = np.ones((33,33), dtype=float)
+        super(flowToKernel, self).__init__()
+        self.KernelInputTensor = torch.FloatTensor(1,1089,33,33)
+        KernelOne = np.ones((33,33), dtype = float)
         for u in range(33):
             for v in range(33):
                 for i in range(33):
                     for j in range(33):
-                        KernelOne[i,j] = KernelGene(j - 16, 16 - i, u-16, v-16)
-                KernelInput[ :, v, u] = np.reshape(KernelOne/(2*np.sum(KernelOne)), -1)
-        self.KernelInputTensor = torch.from_numpy(np.array([KernelInput]))
-        self.KernelInputTensor = Variable(self.KernelInputTensor, requires_grad=False)
+                        KernelOne[i,j] = float(KernelGene(j - 16, 16 - i, u-16, v-16))
+                self.KernelInputTensor[0, :, v, u] = torch.from_numpy(np.reshape(KernelOne/(2*np.sum(KernelOne)), -1))
+        self.KernelInputTensor = Variable(self.KernelInputTensor, requires_grad=False).cuda()
+        self.enlarge = nn.Upsample(scale_factor=4, mode='nearest')
     def forward(self, flow1, flow2):
         """flow1 is optical flow from t-1 to t, flow2 is optical flow from t+1 to t"""
         Kernels1 = F.grid_sample(self.KernelInputTensor, flow1, padding_mode='border')
         Kernels2 = F.grid_sample(self.KernelInputTensor, flow2, padding_mode='border')
-        return Kernels1 + Kernels2
+        return self.enlarge(Kernels1 + Kernels2)
