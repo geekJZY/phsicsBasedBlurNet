@@ -20,10 +20,8 @@ class reblurDataSet(BaseDataset):
         self.foldersLen = foldersLen
         self.foldersStart = foldersStart
         transform_list = [transforms.ToTensor(),
-                          transforms.Normalize(mean=[0,0,0], std=[255,255,255]),
                           transforms.Normalize(mean=[0.411,0.432,0.45], std=[1,1,1])]
         self.transform = transforms.Compose(transform_list)
-        
 
     def __len__(self):
         return sum(self.foldersLen) - 2 * len(self.foldersLen)
@@ -31,7 +29,7 @@ class reblurDataSet(BaseDataset):
     def __getitem__(self, offset):
         images = []
         sample = {}
-        fineSize = 16
+        fineSize = 256
         cnt = 0
         offset = offset + 1
         while offset > 0:
